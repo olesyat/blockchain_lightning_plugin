@@ -1,14 +1,8 @@
-#! /usr/bin/python3
+#!/usr/bin/env python3
 
 from lightning import Plugin
 
 plugin = Plugin()
-
-
-class Client:
-	def __init__(self, address):
-    	pass
-
 
 @plugin.init()
 def init(options, configuration, plugin):

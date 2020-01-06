@@ -1,38 +1,87 @@
-#! /usr/bin/python3
+#!/usr/bin/env python3
 
+from lightning import LightningRpc
 from lightning import Plugin
 
 plugin = Plugin()
 
-class Merchant:
-    
-    def __init__(self, address, channels=None):
-    	wallet_addres =  address
-    	# dict with info about channels
-    	channels = channels
-
-    def create_invoice(self, amount):
-    	# merchant creates an invoice with the expected <amount> in millisatoshi
-    	# label must be a unique string or number (which is treated as a string, so “01” is different from “1”);
-    	# it is never revealed to other nodes on the lightning network, but it can be used to query the status of this invoice
-    	# lightning-cli invoice <amount> <label> <description>
-    	pass
-    
-    def get_channel_info(self):
-    	# A notification for topic channel_opened is sent if a peer
-    	# successfully funded a channel with us. It contains the peer id,
-	    # the funding amount (in millisatoshis), the funding transaction id, and a boolean indicating if the funding transaction has been included into a block. 
-    	pass
-
-
-    def invoice_payment(self):
-    	# on successful invoice payment
-    	pass
+created_invoices = dict()
+connected_peers = dict()
+opened_channels = dict()
 
 
 @plugin.init()
-def init(options, configuration, plugin):
-	plugin.log("Merchant plugin initialized")
+def init(options, configuration, plugin, request):
+    """"""
+    plugin.log("Merchant plugin initialized")
+
+
+@plugin.method("connectinfo")
+def connect_info(plugin):
+    """"""
+    info = plugin.rpc.getinfo()
+    return {
+            "node_id": info["id"], 
+            "address": info["binding"][0]["address"],
+            "port": info["binding"][0]["port"]
+            }
+
+
+@plugin.subscribe("connect")
+def on_connect(plugin, id, address):
+    """"""
+    plugin.log("Received connect event for peer {}".format(id))
+    connected_peers[id] = address
+
+
+@plugin.subscribe("disconnect")
+def on_connect(plugin, id):
+    """"""
+    plugin.log("Received disconnect event for peer {}".format(id))
+    connected_peers.pop(id)
+
+
+@plugin.subscribe("channel_opened")
+def on_opened_channel(plugin, id, funding_satoshis, funding_txid, funding_locked):
+    plugin.log("Peer with id {} successfully funded channel with capacity {}".format(id, funding_satoshis))
+    opened_channels[id] = {"capacity": funding_satoshis, "txid": funding_txid, "in_block":funding_locked}
+
+
+@plugin.method("createinvoice")
+def create_invoice(plugin, amount, label, description, expiry="1m"):
+    """"""
+    invoice = plugin.rpc.invoice(amount, label, description, expiry)
+    created_invoices[label] = {"amount": amount, "description": description, "expiry": expiry, "hash":invoice}
+    return {"invoice_hash": invoice}
+
+
+@plugin.method("invoicestatus")
+def invoice_status(plugin, label=None):
+    """Return the status of a specific invoice, if it exists, or the status of all invoices if given no label"""
+    return plugin.rpc.listinvoices(label) if label != None else plugin.rpc.listinvoices()
+
+
+@plugin.method("funds")
+def list_funds(plugin):
+    """Lists the total funds the lightning node owns off- and onchain in BTC."""
+    unit = "BTC"
+    div =  100*1000*1000
+    funds = plugin.rpc.listfunds()
+    onchain_value = sum([int(x["value"]) for x in funds["outputs"]])
+    offchain_value = sum([int(x["channel_sat"]) for x in funds["channels"]])
+    total_funds = onchain_value + offchain_value
+    return {
+        'total_'+unit: total_funds//div,
+        'onchain_'+unit: onchain_value//div,
+        'offchain_'+unit: offchain_value//div,
+    }
+
+
+@plugin.subscribe("invoice_payment")
+def on_invoice_payment(plugin, label, preimage, msat):
+    """"""
+    created_invoices.pop(label)
+    plugin.log("Invoice (label {}, msat {}) was paid".format(label, msat))
 
 
 plugin.run()
