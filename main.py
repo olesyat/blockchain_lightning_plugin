@@ -31,7 +31,15 @@ def main():
 	# get merchant id, address and port using plugin's RPC method
 	merchant_info = merchant_node.connectinfo()
 	for i in merchant_info:
-		print(i, merchant_info[i])
-
+		print("Merchant's {} is {}".format(i, merchant_info[i]))
+	client_connect_reply = client_node.link(merchant_info["node_id"],
+											merchant_info["address"],
+											merchant_info["port"])
+	if client_connect_reply["code"] == 0:
+		print("Client node is connected to Merchant")
+	else:
+		print("Client node couldn't connect to Merchant")
+	# Fund channel with Merchant
+	
 if __name__ == "__main__":
 	main()
