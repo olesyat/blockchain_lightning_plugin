@@ -4,6 +4,8 @@ from lightning import Plugin
 
 plugin = Plugin()
 
+
+
 @plugin.init()
 def init(options, configuration, plugin):
 	plugin.log("Client plugin initialized")
@@ -23,21 +25,20 @@ def link(plugin, id, host=None, port=None):
 		return response 
 
 
-# fund channel with merchant
 @plugin.method("createchannel")
 def create_channel(plugin, id, amount):
-	pass
+	feerate = "normal"
+	announce = False
+	response = plugin.rpc.fundchannel(id, amount, feerate, announce)
+	if "channel_id" in response.keys():
+		return response
+	
 
 
-# pay invoice
 @plugin.method("payinvoice")
 def pay(plugin, bolt11):
 	response = plugin.rpc.pay(bolt11)
+	return response
 
-
-# get payment status
-
-
-# 
 
 plugin.run()

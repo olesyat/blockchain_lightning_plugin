@@ -24,9 +24,9 @@ start_ln
 ```shell
 address=$(l1-cli newaddr| jq -r '.address')
 ```
-#### Mine 500 blocks and payout to the client's address
+#### Mine 101 blocks and payout to the client's address
 ```shell
-bt-cli generatetoaddress 500 $address
+bt-cli generatetoaddress 101 $address
 ```
 #### Create transaction between two lightning nodes using RPC methods plugins added to lightningd
 ```shell

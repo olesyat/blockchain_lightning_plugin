@@ -47,12 +47,16 @@ def on_opened_channel(plugin, id, funding_satoshis, funding_txid, funding_locked
     opened_channels[id] = {"capacity": funding_satoshis, "txid": funding_txid, "in_block":funding_locked}
 
 
+@plugin.method("openedchannels")
+def list_channels(plugin):
+    return opened_channels
+
 @plugin.method("createinvoice")
 def create_invoice(plugin, amount, label, description, expiry="1m"):
     """"""
     invoice = plugin.rpc.invoice(amount, label, description, expiry)
     created_invoices[label] = {"amount": amount, "description": description, "expiry": expiry, "hash":invoice}
-    return {"invoice_hash": invoice}
+    return invoice
 
 
 @plugin.method("invoicestatus")

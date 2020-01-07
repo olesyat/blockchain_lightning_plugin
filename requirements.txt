@@ -1,0 +1,2 @@
+pylightning==0.0.7.3
+python-bitcoinlib==0.10.2
