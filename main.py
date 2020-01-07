@@ -38,9 +38,7 @@ def main():
 	merchant_info = merchant_node.connectinfo()
 	for i in merchant_info:
 		print("Merchant's {} is {}".format(i, merchant_info[i]))
-	client_connect_reply = client_node.link(merchant_info["node_id"],
-											merchant_info["address"],
-											merchant_info["port"])
+	client_connect_reply = client_node.link(merchant_info["node_id"], merchant_info["address"], merchant_info["port"])
 	if client_connect_reply["code"] == 0:
 		print("Client node is connected to Merchant")
 	else:
@@ -68,7 +66,7 @@ def main():
 	
 	# Create invoice 
 	invoice_label = "invoice#1"
-	merchant_invoice = merchant_node.createinvoice(100, invoice_label, "test payment to merchant")
+	merchant_invoice = merchant_node.createinvoice(1000000000, invoice_label, "test payment to merchant")
 	
 	# Pay by invoice
 	client_pay_reply = client_node.payinvoice(merchant_invoice["bolt11"])
